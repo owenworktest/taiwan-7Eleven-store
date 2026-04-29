@@ -38,11 +38,11 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-          git add stores.yaml README.MD
+          git add stores.yaml stores.json stores-pretty.json README.MD
 
           if git diff --staged --quiet; then
             echo "門市資料沒有變動，跳過提交。"
           else
-            git commit -m "chore: 自動更新 7-11 門市資料 (stores.yaml) [skip ci]"
+            git commit -m "chore: 自動更新 7-11 門市資料 [skip ci]"
             git push
           fi
