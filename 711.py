@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import datetime, timezone, timedelta
@@ -70,7 +71,13 @@ def main():
     with open(os.path.join(SCRIPT_DIR, "stores.yaml"), "w", encoding="utf-8") as f:
         yaml.dump(all_stores, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
 
-    print(f"完成。已將 {len(all_stores)} 筆資料寫入 stores.yaml")
+    # 同時輸出 JSON（壓縮版 + pretty 版）
+    with open(os.path.join(SCRIPT_DIR, "stores.json"), "w", encoding="utf-8") as f:
+        json.dump(all_stores, f, ensure_ascii=False, separators=(",", ":"))
+    with open(os.path.join(SCRIPT_DIR, "stores-pretty.json"), "w", encoding="utf-8") as f:
+        json.dump(all_stores, f, ensure_ascii=False, indent=2)
+
+    print(f"完成。已將 {len(all_stores)} 筆資料寫入 stores.yaml / stores.json / stores-pretty.json")
 
     tw_now = datetime.now(timezone(timedelta(hours=8)))
     update_readme(len(all_stores), tw_now.strftime("%Y/%m/%d"))
