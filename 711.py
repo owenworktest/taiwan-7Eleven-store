@@ -1,9 +1,33 @@
 import os
+import re
+from datetime import datetime, timezone, timedelta
+
 import httpx
 import yaml
 from bs4 import BeautifulSoup
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def update_readme(count: int, date_str: str) -> None:
+    readme_path = os.path.join(SCRIPT_DIR, "README.MD")
+    if not os.path.exists(readme_path):
+        return
+    with open(readme_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    new_content = re.sub(
+        r"最新資料版本：\d{4}/\d{2}/\d{2} \(\d+筆\)",
+        f"最新資料版本：{date_str} ({count}筆)",
+        content,
+    )
+    new_content = re.sub(
+        r"最新7-11全台門市資料 \d+ 筆 \(\d{4}/\d{2}/\d{2}\)",
+        f"最新7-11全台門市資料 {count} 筆 ({date_str})",
+        new_content,
+    )
+    if new_content != content:
+        with open(readme_path, "w", encoding="utf-8") as f:
+            f.write(new_content)
 
 def main():
     all_stores = {}
@@ -47,6 +71,9 @@ def main():
         yaml.dump(all_stores, f, allow_unicode=True, sort_keys=False, default_flow_style=False)
 
     print(f"完成。已將 {len(all_stores)} 筆資料寫入 stores.yaml")
+
+    tw_now = datetime.now(timezone(timedelta(hours=8)))
+    update_readme(len(all_stores), tw_now.strftime("%Y/%m/%d"))
 
 if __name__ == "__main__":
     main()
