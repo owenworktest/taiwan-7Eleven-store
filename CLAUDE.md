@@ -33,7 +33,8 @@ python okmart.py                  # OK超商
 
 `store_io.py` 為三支爬蟲共用：
 
-- `write_outputs(stores, basename)` — 輸出 `{basename}.json` 與 `{basename}-pretty.json`
+- `normalize(text)` — 全形轉半形（刻意不用 NFKC，避免動到中文字）
+- `write_outputs(stores, basename)` — 正規化後輸出 `{basename}.json` 與 `{basename}-pretty.json`
 - `update_readme(brand, count)` — 更新 README.MD 資料表中該品牌的筆數與日期
 
 每支爬蟲只負責抓取與正規化，最後呼叫這兩個函式。新增超商時照同樣模式加一支檔案，
@@ -86,8 +87,8 @@ python okmart.py                  # OK超商
 - 全家 bbox 的 `vLeft` 必須是 118.0，用 119.0 會漏掉 14 間金門門市
 - `api.map.com.tw` 的 https 無法連線（TLS 交握失敗），只能用 http；
   且必須帶 `family.com.tw` 的 Referer，否則回空白 HTML
-- 各家地址的全形／半形數字不一致（全家 99% 全形、OK 25%、7-11 幾乎全半形），
-  資料刻意保留原樣，跨品牌比對的正規化交由下游處理
+- 各家原始資料的全形使用差異極大（全家 99% 全形、OK 25%、7-11 幾乎全半形），
+  `store_io.normalize()` 在輸出前統一轉半形，四支爬蟲都經過它所以不會漏
 - **萊爾富有 Akamai WAF**：短時間內約十幾次請求就會整站 403 封鎖數小時。
   其 API 一次就能取回全部門市，絕對不要改寫成逐縣市迴圈，也不要反覆重試
 - 萊爾富原始 `shop_adr` 帶 3 碼郵遞區號前綴，爬蟲已移除以對齊其他品牌
@@ -95,4 +96,5 @@ python okmart.py                  # OK超商
 - 萊爾富僅在 17 個縣市設點（無花蓮、台東、澎湖、金門、連江）
 - 所有 `stores*.json` 有提交至 git，作為下游使用的快取資料集
 - GitHub Action 每日自動更新，各爬蟲步驟設 `continue-on-error`，
-  單一超商網站故障不會中斷其他品牌的更新
+  單一超商網站故障不會中斷其他品牌的更新；最後有「回報爬蟲失敗」步驟，
+  排在提交之後，確保資料照常更新的同時失敗仍會讓 workflow 顯示紅燈

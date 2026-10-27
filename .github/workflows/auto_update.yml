@@ -31,18 +31,22 @@ jobs:
           pip install -r requirements.txt
 
       - name: 執行爬蟲程式 (7-ELEVEN)
+        id: seven
         continue-on-error: true
         run: python 711.py
 
       - name: 執行爬蟲程式 (全家)
+        id: familymart
         continue-on-error: true
         run: python familymart.py
 
       - name: 執行爬蟲程式 (萊爾富)
+        id: hilife
         continue-on-error: true
         run: python hilife.py
 
       - name: 執行爬蟲程式 (OK超商)
+        id: okmart
         continue-on-error: true
         run: python okmart.py
 
@@ -59,3 +63,20 @@ jobs:
             git commit -m "chore: 自動更新超商門市資料 [skip ci]"
             git push
           fi
+
+      # continue-on-error 會讓失敗的步驟顯示為成功，這裡補一個檢查讓失敗看得見。
+      # 放在提交之後，確保其他品牌的資料仍會正常更新。
+      - name: 回報爬蟲失敗
+        if: steps.seven.outcome == 'failure' || steps.familymart.outcome == 'failure' || steps.hilife.outcome == 'failure' || steps.okmart.outcome == 'failure'
+        env:
+          SEVEN: ${{ steps.seven.outcome }}
+          FAMILYMART: ${{ steps.familymart.outcome }}
+          HILIFE: ${{ steps.hilife.outcome }}
+          OKMART: ${{ steps.okmart.outcome }}
+        run: |
+          echo "::error::以下爬蟲執行失敗，對應品牌的資料未更新："
+          if [ "$SEVEN" = "failure" ]; then echo "::error::7-ELEVEN (711.py)"; fi
+          if [ "$FAMILYMART" = "failure" ]; then echo "::error::全家 (familymart.py)"; fi
+          if [ "$HILIFE" = "failure" ]; then echo "::error::萊爾富 (hilife.py)"; fi
+          if [ "$OKMART" = "failure" ]; then echo "::error::OK超商 (okmart.py)"; fi
+          exit 1

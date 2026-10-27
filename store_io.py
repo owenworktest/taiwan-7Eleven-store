@@ -5,9 +5,25 @@ from datetime import datetime, timedelta, timezone
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# 全形英數標點（U+FF01–U+FF5E）與全形空格（U+3000）轉半形。
+# 刻意不用 NFKC，避免一併改動到中文字。
+FULLWIDTH_TO_HALFWIDTH = {code: code - 0xFEE0 for code in range(0xFF01, 0xFF5F)}
+FULLWIDTH_TO_HALFWIDTH[0x3000] = 0x20
+
+
+def normalize(text: str) -> str:
+    """統一全形為半形。各家對全形的使用差異極大（全家約 99% 地址用全形數字、
+    7-ELEVEN 幾乎全半形），不統一的話下游搜尋「535號」會對不到「５３５號」。"""
+    return text.translate(FULLWIDTH_TO_HALFWIDTH).strip()
+
 
 def write_outputs(stores: dict, basename: str) -> None:
-    """輸出 {basename}.json（單行壓縮）與 {basename}-pretty.json（縮排）。"""
+    """正規化後輸出 {basename}.json（單行壓縮）與 {basename}-pretty.json（縮排）。"""
+    stores = {
+        store_id: {"store": normalize(info["store"]), "address": normalize(info["address"])}
+        for store_id, info in stores.items()
+    }
+
     # ensure_ascii=False 確保中文不轉義，dict 保持插入順序 (Python 3.7+)
     with open(os.path.join(SCRIPT_DIR, f"{basename}.json"), "w", encoding="utf-8") as f:
         json.dump(stores, f, ensure_ascii=False, separators=(",", ":"))
