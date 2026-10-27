@@ -1,8 +1,8 @@
-name: 自動更新 7-11 門市資料 (Auto Update Stores)
+name: 自動更新超商門市資料 (Auto Update Stores)
 
 on:
   schedule:
-    # 每日 UTC 00:00 (台灣時間星期日早上 8 點)
+    # 每日 UTC 00:00 (台灣時間每日早上 8 點)
     - cron: '0 0 * * *'
 
   # 允許在 GitHub Actions 頁面手動觸發
@@ -30,19 +30,32 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 執行爬蟲程式
+      - name: 執行爬蟲程式 (7-ELEVEN)
+        continue-on-error: true
         run: python 711.py
+
+      - name: 執行爬蟲程式 (全家)
+        continue-on-error: true
+        run: python familymart.py
+
+      - name: 執行爬蟲程式 (萊爾富)
+        continue-on-error: true
+        run: python hilife.py
+
+      - name: 執行爬蟲程式 (OK超商)
+        continue-on-error: true
+        run: python okmart.py
 
       - name: 檢查並提交變更
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-          git add stores.yaml stores.json stores-pretty.json README.MD
+          git add 'stores*.json' README.MD
 
           if git diff --staged --quiet; then
             echo "門市資料沒有變動，跳過提交。"
           else
-            git commit -m "chore: 自動更新 7-11 門市資料 [skip ci]"
+            git commit -m "chore: 自動更新超商門市資料 [skip ci]"
             git push
           fi

@@ -23,8 +23,5 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# HTML files (scraped content)
-*.html
-
 # Logs
 *.log

@@ -1,32 +1,45 @@
-# Taiwan 7-Eleven Store Scraper
+# Taiwan Convenience Store Scraper
 
 ## Overview
-這個專案提供台灣 7-Eleven 門市列表爬蟲，可直接利用已抓取的 `stores.yaml` 清單快速使用。
+這個專案提供台灣四大超商（7-ELEVEN、全家、萊爾富、OK超商）門市列表爬蟲，
+也可直接取用已抓取好的資料檔快速使用。
 
-- 最新資料版本：2026/10/27 (7332筆) 
-- 採用Github Action 每日自動更新
+- 採用 Github Action 每日自動更新
 - 參考文章：[iThome - 使用爬蟲取得 7-11 門市清單](https://ithelp.ithome.com.tw/articles/10193779)
+
+## 資料集
+
+| 超商 | 檔名前綴 | 筆數 | 更新日期 | 爬蟲 | 資料來源 |
+| --- | --- | --- | --- | --- | --- |
+| 7-ELEVEN | `stores` | 7332 | 2026/10/27 | `711.py` | ibon 門市查詢 |
+| 全家 | `stores-familymart` | 4539 | 2026/10/27 | `familymart.py` | 全家店鋪地圖 api.map.com.tw |
+| 萊爾富 | `stores-hilife` | 1868 | 2026/10/27 | `hilife.py` | 萊爾富官網 webapi |
+| OK超商 | `stores-okmart` | 372 | 2026/10/27 | `okmart.py` | OK超商官網門市查詢（含 OK mini） |
 
 ## Project Structure
 ```
 .
-├─ 711.py              # 爬蟲程式
-├─ stores.yaml         # 最新7-11全台門市資料 7332 筆 (2026/10/27)
-├─ stores.json         # 同上資料的 JSON 壓縮版（單行，適合機器讀取）
-├─ stores-pretty.json  # 同上資料的 JSON 美化版（縮排 2 空白，適合人閱讀／diff）
-└─ requirements.txt    # 依賴
+├─ 711.py                          # 7-ELEVEN 爬蟲
+├─ familymart.py                   # 全家爬蟲
+├─ hilife.py                       # 萊爾富爬蟲
+├─ okmart.py                       # OK超商爬蟲
+├─ store_io.py                     # 共用輸出 / README 更新
+├─ stores.json                     # 7-ELEVEN 門市資料（另有 -pretty 版）
+├─ stores-familymart.json          # 全家門市資料
+├─ stores-hilife.json              # 萊爾富門市資料
+├─ stores-okmart.json              # OK超商門市資料
+└─ requirements.txt                # 依賴
 ```
 
 ## Output Formats
-每次爬取會同步輸出三種格式，內容完全相同，依使用情境選用：
+每個品牌都會同步輸出兩種 JSON，內容完全相同，依使用情境選用：
 
 | 檔名 | 格式 | 適合用途 |
 | --- | --- | --- |
-| `stores.yaml` | YAML | 給人看、版本控制 diff 友善 |
-| `stores.json` | JSON（單行壓縮） | 程式讀取、檔案最小化 |
-| `stores-pretty.json` | JSON（indent=2） | 給人看、跨語言除錯 |
+| `{前綴}.json` | JSON（單行壓縮） | 程式讀取、檔案最小化 |
+| `{前綴}-pretty.json` | JSON（indent=2） | 給人看、版本控制 diff 友善 |
 
-資料結構皆以門市編號為 key：
+三個品牌的資料結構一致，皆以門市編號為 key：
 ```json
 {
   "110817": { "store": "千翔", "address": "台北市中正區許昌街17號1樓" }
@@ -34,15 +47,66 @@
 ```
 
 ## Usage
-1. 若不需要最新資料，可直接使用 repo 內已生成的 `stores.yaml` / `stores.json` / `stores-pretty.json`。
-2. 若需重新爬取，執行 `python 711.py`，結果將會輸出覆蓋上述三個檔案。
+```bash
+pip install -r requirements.txt
+
+python 711.py         # 7-ELEVEN
+python familymart.py  # 全家
+python hilife.py      # 萊爾富
+python okmart.py      # OK超商
+```
+若不需要最新資料，可直接使用 repo 內已生成的檔案。
+
+### 直接讀取資料檔
+
+```python
+import json
+
+with open("stores-familymart.json", encoding="utf-8") as f:
+    stores = json.load(f)
+
+print(stores["020909"])
+# {'store': '全家芳苑王功店', 'address': '彰化縣芳苑鄉芳漢路王功段５３５號'}
+```
+
+合併四家（店號在不同品牌間可能重複，建議加上品牌前綴）：
+
+```python
+import json
+
+BRANDS = {
+    "711": "stores.json",
+    "familymart": "stores-familymart.json",
+    "hilife": "stores-hilife.json",
+    "okmart": "stores-okmart.json",
+}
+
+all_stores = {}
+for brand, path in BRANDS.items():
+    with open(path, encoding="utf-8") as f:
+        for store_id, info in json.load(f).items():
+            all_stores[f"{brand}-{store_id}"] = {"brand": brand, **info}
+```
+
+### 不想自己跑爬蟲
+
+直接抓 repo 內每日更新的檔案即可（raw 連結，記得換成自己的 repo 路徑）：
+
+```bash
+curl -O https://raw.githubusercontent.com/<user>/<repo>/master/stores-familymart.json
+```
 
 ## Notes
 - 使用非公開 API 請保持禮貌，避免造成伺服器負擔。
+- **各家地址的半形／全形數字不一致**：全家約 99%、OK 約 25% 使用全形數字（`５３５號`），
+  7-ELEVEN 幾乎全為半形。若要跨品牌做地址搜尋或比對，請先自行正規化。
+- 全家的 `api.map.com.tw` 金鑰由爬蟲從店鋪地圖頁面即時抓取，不寫死；該站僅支援 `http`。
+- 萊爾富 API 一次請求即可取回全部門市，**請勿**改寫成逐縣市迴圈，其 WAF 會在短時間多次請求後封鎖 IP。
+- 萊爾富部分門市名稱含有 `(暫歇中)` 標記，資料保留原樣，下游如需過濾請自行處理。
+- 萊爾富原始地址帶有 3 碼郵遞區號前綴，爬蟲已移除以對齊其他品牌格式。
+- 萊爾富僅在 17 個縣市設點（無花蓮、台東、澎湖、金門、連江）。
 - 請勿過度大量呼叫，建議對資料做好快取與重用，如果你沒有特殊需求歡迎直接每日從本專案抓取最新資訊。
-- 若需長期使用，建議定期重新抓取以更新門市資訊。
 - 爬蟲行為需遵循相關網站使用規範與法律。
 
 ## License
-資料來源為台灣 7-Eleven 官方網站，請依照原服務條款使用；
-
+資料來源為各超商官方網站，請依照原服務條款使用；
