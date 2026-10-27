@@ -78,6 +78,7 @@ python okmart.py                  # OK超商
 
 - `httpx` — HTTP 客戶端
 - `beautifulsoup4` — HTML 解析
+- `curl_cffi` — 僅 `hilife.py` 使用，偽裝 Chrome TLS 指紋以通過 Akamai WAF
 
 ## 注意事項
 
@@ -89,8 +90,13 @@ python okmart.py                  # OK超商
   且必須帶 `family.com.tw` 的 Referer，否則回空白 HTML
 - 各家原始資料的全形使用差異極大（全家 99% 全形、OK 25%、7-11 幾乎全半形），
   `store_io.normalize()` 在輸出前統一轉半形，四支爬蟲都經過它所以不會漏
-- **萊爾富有 Akamai WAF**：短時間內約十幾次請求就會整站 403 封鎖數小時。
+- **萊爾富有 Akamai WAF，會比對 TLS 指紋**：用 `httpx` / `requests` 一律 403
+  （連首頁都進不去，與 IP 無關），所以 `hilife.py` 改用
+  `curl_cffi.requests.Session(impersonate="chrome")`，**不要改回 httpx**
+- 萊爾富另有頻率限制：短時間內約十幾次請求會整站 403 封鎖數小時。
   其 API 一次就能取回全部門市，絕對不要改寫成逐縣市迴圈，也不要反覆重試
+- `https://www.hilife.com.tw/filter` 只是同一個查詢頁的新前端路由，背後仍是同一支
+  `GetShopServices`，換網址無助於繞過 WAF
 - 萊爾富原始 `shop_adr` 帶 3 碼郵遞區號前綴，爬蟲已移除以對齊其他品牌
 - 萊爾富約 164 筆門市名稱含 `(暫歇中)`，資料刻意保留原樣，過濾交由下游決定
 - 萊爾富僅在 17 個縣市設點（無花蓮、台東、澎湖、金門、連江）
