@@ -39,7 +39,7 @@
 | `{前綴}.json` | JSON（單行壓縮） | 程式讀取、檔案最小化 |
 | `{前綴}-pretty.json` | JSON（indent=2） | 給人看、版本控制 diff 友善 |
 
-三個品牌的資料結構一致，皆以門市編號為 key：
+四個品牌的資料結構一致，皆以門市編號為 key：
 ```json
 {
   "110817": { "store": "千翔", "address": "台北市中正區許昌街17號1樓" }
@@ -47,15 +47,42 @@
 ```
 
 ## Usage
-```bash
-pip install -r requirements.txt
 
-python 711.py         # 7-ELEVEN
-python familymart.py  # 全家
-python hilife.py      # 萊爾富
-python okmart.py      # OK超商
+若不需要最新資料，可直接使用 repo 內已生成的 JSON，不必跑爬蟲。
+
+### 本地執行
+
+四支爬蟲各自獨立，**跑哪支就只更新哪家的檔案**，彼此不影響。
+請在 repo 根目錄執行（四支共用 `store_io.py`，換目錄會 import 失敗）。
+
+```bash
+cd /path/to/taiwan-7Eleven-store
+
+# 1. 建立虛擬環境並安裝依賴（第一次才需要）
+python -m venv .venv
+.venv/Scripts/pip install -r requirements.txt     # Windows
+# source .venv/bin/activate && pip install -r requirements.txt   # macOS / Linux
+
+# 2. 只更新想要的超商
+.venv/Scripts/python okmart.py        # OK超商
+.venv/Scripts/python familymart.py    # 全家
+.venv/Scripts/python hilife.py        # 萊爾富
+.venv/Scripts/python 711.py           # 7-ELEVEN
 ```
-若不需要最新資料，可直接使用 repo 內已生成的檔案。
+
+啟用虛擬環境後（`source .venv/Scripts/activate`）可直接用 `python okmart.py`。
+
+| 指令 | 產出檔案 | 請求數 |
+| --- | --- | --- |
+| `python 711.py` | `stores.json` / `stores-pretty.json` | 24 |
+| `python familymart.py` | `stores-familymart.json` / `-pretty.json` | 2 |
+| `python hilife.py` | `stores-hilife.json` / `-pretty.json` | 2 |
+| `python okmart.py` | `stores-okmart.json` / `-pretty.json` | 2 |
+
+每支跑完會順手更新上方資料表中**自己那一列**的筆數與日期，不會動到其他品牌。
+
+> **跑 `hilife.py` 請節制。** 萊爾富有 Akamai WAF，短時間內約十幾次請求就會
+> 整站 403 封鎖數小時。它一次請求就能取回全部門市，失敗時不要重試，等待即可。
 
 ### 直接讀取資料檔
 
@@ -66,7 +93,7 @@ with open("stores-familymart.json", encoding="utf-8") as f:
     stores = json.load(f)
 
 print(stores["020909"])
-# {'store': '全家芳苑王功店', 'address': '彰化縣芳苑鄉芳漢路王功段５３５號'}
+# {'store': '全家芳苑王功店', 'address': '彰化縣芳苑鄉芳漢路王功段535號'}
 ```
 
 合併四家（店號在不同品牌間可能重複，建議加上品牌前綴）：
