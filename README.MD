@@ -11,10 +11,10 @@
 
 | 超商 | 檔名前綴 | 筆數 | 更新日期 | 爬蟲 | 資料來源 |
 | --- | --- | --- | --- | --- | --- |
-| 7-ELEVEN | `stores` | 7355 | 2026/11/24 | `711.py` | ibon 門市查詢 |
-| 全家 | `stores-familymart` | 4546 | 2026/11/24 | `familymart.py` | 全家店鋪地圖 api.map.com.tw |
-| 萊爾富 | `stores-hilife` | 1865 | 2026/11/24 | `hilife.py` | 萊爾富官網 webapi |
-| OK超商 | `stores-okmart` | 372 | 2026/11/24 | `okmart.py` | OK超商官網門市查詢（含 OK mini） |
+| 7-ELEVEN | `stores` | 7359 | 2026/11/25 | `711.py` | ibon 門市查詢 |
+| 全家 | `stores-familymart` | 4547 | 2026/11/25 | `familymart.py` | 全家店鋪地圖 api.map.com.tw |
+| 萊爾富 | `stores-hilife` | 1864 | 2026/11/25 | `hilife.py` | 萊爾富官網 webapi |
+| OK超商 | `stores-okmart` | 372 | 2026/11/25 | `okmart.py` | OK超商官網門市查詢（含 OK mini） |
 
 ## Project Structure
 ```
